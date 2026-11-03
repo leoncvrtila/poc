@@ -1,0 +1,9 @@
+# Used by the backend image, which is built with the repo root as context (it needs data/).
+# The frontend image uses ./frontend as context and its own .dockerignore.
+**/node_modules
+**/dist
+**/.angular
+**/coverage
+**/.env
+.git
+frontend

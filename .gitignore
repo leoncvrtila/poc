@@ -1,0 +1,8 @@
+node_modules/
+dist/
+coverage/
+.angular/
+.env
+backend/src/generated/
+*.log
+.DS_Store
