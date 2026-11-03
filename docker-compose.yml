@@ -1,0 +1,86 @@
+name: product-finder
+
+services:
+  postgres:
+    image: postgres:18.6-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: finder
+      POSTGRES_PASSWORD: finder
+      POSTGRES_DB: product_finder
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U finder -d product_finder"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.56.1
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-dev-master-key-change-me-0123456789}
+      MEILI_ENV: development
+      MEILI_NO_ANALYTICS: "true"
+    ports:
+      - "127.0.0.1:${MEILI_PORT:-7700}:7700"
+    volumes:
+      - meili-data:/meili_data
+    healthcheck:
+      # 127.0.0.1, not localhost: inside the container localhost resolves to ::1, but Meilisearch listens on IPv4 only.
+      test: ["CMD-SHELL", "wget --no-verbose --spider http://127.0.0.1:7700/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend-init:
+    image: product-finder-backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment: &backend-env
+      DATABASE_URL: postgresql://finder:finder@postgres:5432/product_finder
+      MEILI_URL: http://meilisearch:7700
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-dev-master-key-change-me-0123456789}
+      MEILI_INDEX: products
+      PIM_EXPORT_PATH: /app/data/products.csv
+      SEED_CATALOG_SIZE: ${SEED_CATALOG_SIZE:-500000}
+      SEED_DEMO_REVIEWS: ${SEED_DEMO_REVIEWS:-true}
+    # Idempotent: safe on every `docker compose up`.
+    command: >
+      sh -c "npx prisma migrate deploy
+      && node dist/cli.js seed
+      && if [ \"$$SEED_DEMO_REVIEWS\" = \"true\" ]; then node dist/cli.js demo-reviews; fi"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+
+  backend:
+    image: product-finder-backend
+    restart: unless-stopped
+    environment: *backend-env
+    # Loopback only: public traffic must go through nginx, otherwise X-Forwarded-For could be spoofed.
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-3000}:3000"
+    depends_on:
+      backend-init:
+        condition: service_completed_successfully
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres-data:
+  meili-data:
