@@ -1,0 +1,18 @@
+<header class="app-header">
+  <a routerLink="/products" class="brand"><i class="pi pi-th-large" aria-hidden="true"></i> Product Finder</a>
+</header>
+
+<main class="app-main">
+  <router-outlet />
+</main>
+
+<footer class="app-footer">
+  @if (status(); as catalog) {
+    <span>{{ catalog.listedProducts }} products</span>
+    @if (catalog.lastImportAt) {
+      <span>· Catalogue updated {{ catalog.lastImportAt | date: 'medium' }}</span>
+    }
+  }
+</footer>
+
+<p-toast position="bottom-center" />
