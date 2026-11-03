@@ -1,0 +1,19 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "..",
+  "testRegex": "test/.*\\.int-spec\\.ts$",
+  "moduleNameMapper": { "^(\\.{1,2}/.*)\\.js$": "$1" },
+  "transform": {
+    "^.+\\.(t|j)s$": [
+      "ts-jest",
+      { "tsconfig": { "module": "commonjs", "moduleResolution": "node10", "resolvePackageJsonExports": false } }
+    ]
+  },
+  "testEnvironment": "node",
+  "globalSetup": "<rootDir>/test/support/global-setup.ts",
+  "setupFiles": ["<rootDir>/test/support/load-test-env.ts"],
+  "testTimeout": 30000,
+  "collectCoverageFrom": ["src/**/*.ts", "!src/generated/**", "!src/**/*.spec.ts", "!src/main.ts", "!src/cli.ts"],
+  "coverageDirectory": "<rootDir>/coverage/int",
+  "coverageThreshold": { "global": { "lines": 90, "branches": 75 } }
+}
