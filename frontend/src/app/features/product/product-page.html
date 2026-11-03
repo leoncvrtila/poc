@@ -1,0 +1,70 @@
+<article class="product">
+  <div class="product__nav">
+    <p-button icon="pi pi-arrow-left" label="Back" [text]="true" (onClick)="back()" />
+  </div>
+
+  @switch (state().status) {
+    @case ('loading') {
+      <p-skeleton height="2.5rem" width="60%" />
+      <p-skeleton height="10rem" styleClass="mt" />
+    }
+    @case ('not-found') {
+      <div class="product__missing">
+        <h1>Product not found</h1>
+        <p class="muted">We could not find a product with SKU {{ sku() }}.</p>
+        <p-button label="Browse products" routerLink="/products" />
+      </div>
+    }
+    @case ('error') {
+      <p-message severity="error">The product could not be loaded. Please try again.</p-message>
+    }
+    @case ('ready') {
+      @if (product(); as p) {
+        <header class="product__header">
+          <div>
+            <h1>{{ p.displayName }}</h1>
+            <p class="muted">{{ p.sku }} · {{ p.chemicalName }}</p>
+          </div>
+          <div class="product__header-actions">
+            <p-tag [value]="statusLabel[p.status]" [severity]="statusSeverity[p.status]" />
+            <app-compare-toggle [product]="p" />
+            <app-share-button />
+          </div>
+        </header>
+
+        @if (banner(); as b) {
+          <p-message [severity]="b.severity" styleClass="product__banner">
+            <strong>{{ b.summary }}.</strong>&nbsp;{{ b.detail }}
+          </p-message>
+        }
+
+        <section class="product__body">
+          <p class="product__description">{{ p.description }}</p>
+          <dl class="facts">
+            <div><dt>Function</dt><dd>{{ p.function }}</dd></div>
+            <div><dt>Application area</dt><dd>{{ p.applicationArea }}</dd></div>
+            <div><dt>Region</dt><dd>{{ p.region }}</dd></div>
+            <div><dt>Chemistry</dt><dd>{{ p.chemicalName }}</dd></div>
+            <div><dt>Launched</dt><dd>{{ p.launchYear ?? 'Not specified' }}</dd></div>
+            <div><dt>SKU</dt><dd>{{ p.sku }}</dd></div>
+          </dl>
+          <div>
+            <h2 class="product__subtitle">Certifications</h2>
+            @if (p.certifications.length > 0) {
+              <div class="product__chips">
+                @for (certification of p.certifications; track certification) {
+                  <p-chip [label]="certification" />
+                }
+              </div>
+            } @else {
+              <p class="muted">No certifications listed.</p>
+            }
+          </div>
+        </section>
+
+        <app-reviews-section [sku]="p.sku" [canReview]="p.listed" />
+      }
+    }
+  }
+  <app-compare-bar />
+</article>
