@@ -1,0 +1,90 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ProductStatus {
+  ACTIVE
+  PHASE_OUT
+  DISCONTINUED
+}
+
+enum ImportOutcome {
+  SUCCEEDED
+  ABORTED
+  FAILED
+}
+
+/// Owned by the catalog module. Never deleted: products missing from the PIM export are delisted.
+model Product {
+  id              String        @id @default(uuid()) @db.Uuid
+  sku             String        @unique
+  name            String?
+  chemicalName    String        @map("chemical_name")
+  function        String
+  applicationArea String        @map("application_area")
+  region          String
+  certifications  String[]
+  status          ProductStatus
+  launchYear      Int?          @map("launch_year")
+  description     String
+  listed          Boolean       @default(true)
+  contentHash     String        @map("content_hash")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  @@map("product")
+}
+
+/// Owned by the catalog module. One row per import attempt (audit trail for product managers).
+model ImportRun {
+  id         String        @id @default(uuid()) @db.Uuid
+  sourceFile String        @map("source_file")
+  startedAt  DateTime      @map("started_at")
+  finishedAt DateTime      @map("finished_at")
+  outcome    ImportOutcome
+  message    String?
+  rowsRead   Int           @map("rows_read")
+  created    Int
+  updated    Int
+  unchanged  Int
+  delisted   Int
+  relisted   Int
+  rejected   Int
+  issues     Json
+
+  @@index([outcome, finishedAt])
+  @@map("import_run")
+}
+
+/// Owned by the reviews module. References products by SKU (no cross-module foreign key).
+model Review {
+  id         String   @id @default(uuid()) @db.Uuid
+  productSku String   @map("product_sku")
+  authorName String   @map("author_name")
+  rating     Int
+  comment    String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([productSku, createdAt])
+  @@map("review")
+}
+
+/// Owned by shared/outbox. Written in the same transaction as the change it describes.
+model OutboxEvent {
+  id          BigInt    @id @default(autoincrement())
+  type        String
+  payload     Json
+  createdAt   DateTime  @default(now()) @map("created_at")
+  availableAt DateTime  @default(now()) @map("available_at")
+  processedAt DateTime? @map("processed_at")
+  attempts    Int       @default(0)
+  lastError   String?   @map("last_error")
+
+  @@map("outbox_event")
+}
