@@ -1,0 +1,110 @@
+<section class="search">
+  <div class="toolbar">
+    <p-iconfield class="toolbar__search">
+      <p-inputicon styleClass="pi pi-search" />
+      <input
+        pInputText
+        type="search"
+        placeholder="Search by name, SKU, chemistry or application"
+        aria-label="Search products"
+        [value]="searchText()"
+        (input)="onSearchInput($any($event.target).value)"
+      />
+    </p-iconfield>
+
+    <div class="toolbar__actions">
+      <p-button class="toolbar__filters" icon="pi pi-filter" [label]="filtersLabel()" severity="secondary" (onClick)="filtersOpen.set(true)" />
+      <p-select
+        [options]="sortChoices"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="sort()"
+        (onChange)="onSortChange($event.value)"
+        ariaLabel="Sort results"
+      />
+      <app-share-button />
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside class="layout__facets" aria-label="Filters">
+      <app-facet-panel idPrefix="side-" [facets]="lastResult()?.facets ?? null" (toggled)="onToggle($event)" />
+    </aside>
+
+    <div class="layout__results">
+      @if (chips().length > 0) {
+        <div class="chips">
+          @for (chip of chips(); track chip.facet + chip.value) {
+            <p-chip [label]="chip.label" [removable]="true" (onRemove)="onRemoveChip(chip)" />
+          }
+          <p-button label="Clear all" [text]="true" size="small" (onClick)="onClearFilters()" />
+        </div>
+      }
+
+      @switch (state().status) {
+        @case ('loading') {
+          <div class="grid" aria-busy="true">
+            @for (item of skeletons; track item) {
+              <p-skeleton height="8.5rem" borderRadius="0.75rem" />
+            }
+          </div>
+        }
+        @case ('error') {
+          <div class="error">
+            <p-message severity="error">{{ errorMessage() }}</p-message>
+            <p-button label="Try again" severity="secondary" (onClick)="onRetry()" />
+          </div>
+        }
+        @case ('ready') {
+          @if (result(); as data) {
+            <p class="summary muted" aria-live="polite">{{ data.total }} {{ data.total === 1 ? 'product' : 'products' }}</p>
+            @if (data.degraded) {
+              <p-message severity="warn">
+                Search is running in limited mode — results may be less relevant and sorting by rating is unavailable.
+              </p-message>
+            }
+            @if (data.items.length > 0) {
+              <div class="grid">
+                @for (product of data.items; track product.sku) {
+                  <app-product-card [product]="product" />
+                }
+              </div>
+              @if (data.totalPages > 1) {
+                <p-paginator
+                  [first]="(data.page - 1) * data.pageSize"
+                  [rows]="data.pageSize"
+                  [totalRecords]="browsableTotal()"
+                  [rowsPerPageOptions]="[20, 50]"
+                  (onPageChange)="onPageChange($event)"
+                />
+              }
+              @if (data.total > browsableTotal()) {
+                <p class="muted">
+                  Only the first {{ browsableTotal() }} results can be browsed — refine your search or filters to narrow them down.
+                </p>
+              }
+            } @else if (data.total > 0) {
+              <div class="empty">
+                <p>This page is empty.</p>
+                <p-button label="Go to first page" severity="secondary" (onClick)="onFirstPage()" />
+              </div>
+            } @else {
+              <div class="empty">
+                <p>No products match your search.</p>
+                @if (chips().length > 0) {
+                  <p-button label="Clear filters" severity="secondary" (onClick)="onClearFilters()" />
+                }
+              </div>
+            }
+          }
+        }
+      }
+    </div>
+  </div>
+
+  <app-compare-bar />
+
+  <p-drawer [visible]="filtersOpen()" (visibleChange)="filtersOpen.set($event)" header="Filters" position="left">
+    <app-facet-panel idPrefix="drawer-" [facets]="lastResult()?.facets ?? null" (toggled)="onToggle($event)" />
+  </p-drawer>
+</section>
