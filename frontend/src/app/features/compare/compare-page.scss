@@ -1,0 +1,127 @@
+.compare {
+  display: grid;
+  gap: 1rem;
+}
+
+.compare__nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.compare__title {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.compare__title:focus {
+  outline: none;
+}
+
+.compare__empty {
+  padding: 2rem 0;
+  text-align: center;
+}
+
+// A fixed layout gives every product an equal column, and long words wrap instead of widening the table,
+// so three products fit on a phone without horizontal scrolling.
+.compare__table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--p-surface-200);
+  border-radius: 0.75rem;
+  background: var(--p-surface-0);
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+.compare__head {
+  padding: 1rem 0.75rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+  font-weight: normal;
+}
+
+.compare__head-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.compare__head-top {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.25rem;
+  width: 100%;
+}
+
+.compare__name {
+  font-weight: 600;
+  color: inherit;
+}
+
+.compare__rating {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+}
+
+.compare__label {
+  padding: 0.75rem 0.75rem 0.25rem;
+  border-top: 1px solid var(--p-surface-200);
+  text-align: left;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--p-text-muted-color);
+}
+
+.compare__same {
+  font-weight: normal;
+}
+
+td {
+  padding: 0 0.75rem 0.75rem;
+  vertical-align: top;
+  line-height: 1.4;
+}
+
+.compare__group--same td {
+  color: var(--p-text-muted-color);
+}
+
+.compare__certs {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  .pi {
+    margin-right: 0.25rem;
+    font-size: 0.75rem;
+  }
+}
+
+.compare__cert--missing {
+  color: var(--p-text-muted-color);
+  text-decoration: line-through;
+}
+
+@media (max-width: 600px) {
+  .compare__table {
+    font-size: 0.875rem;
+  }
+
+  .compare__head,
+  .compare__label,
+  td {
+    padding-inline: 0.5rem;
+  }
+}

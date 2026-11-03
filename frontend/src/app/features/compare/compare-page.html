@@ -1,0 +1,118 @@
+<section class="compare">
+  <div class="compare__nav">
+    <p-button icon="pi pi-arrow-left" label="Back" [text]="true" (onClick)="back()" />
+    @if (columns().length > 0) {
+      <app-share-button />
+    }
+  </div>
+
+  <h1 #heading class="compare__title" tabindex="-1">Compare products</h1>
+
+  @switch (state().status) {
+    @case ('loading') {
+      <p-skeleton height="20rem" borderRadius="0.75rem" />
+    }
+    @case ('ready') {
+      @if (columns().length === 0) {
+        <div class="compare__empty">
+          <p>Tick "Compare" on up to {{ maxCompare }} products to see them side by side.</p>
+          <p-button label="Browse products" routerLink="/products" />
+        </div>
+      } @else {
+        @if (loaded() < 2) {
+          <p-message severity="info">Add at least one more product to compare.</p-message>
+        }
+        <table class="compare__table">
+          <caption class="visually-hidden">Product comparison</caption>
+          <thead>
+            <tr>
+              @for (column of columns(); track column.sku) {
+                <th scope="col" class="compare__head">
+                  <div class="compare__head-body">
+                    <div class="compare__head-top">
+                      @if (column.product; as product) {
+                        <a class="compare__name" [routerLink]="['/products', product.sku]">{{ product.displayName }}</a>
+                      } @else {
+                        <span class="compare__name">{{ column.sku }}</span>
+                      }
+                      <p-button
+                        icon="pi pi-times"
+                        severity="secondary"
+                        size="small"
+                        [text]="true"
+                        [rounded]="true"
+                        [ariaLabel]="'Remove ' + (column.product?.displayName ?? column.sku) + ' from comparison'"
+                        (onClick)="remove(column.sku)"
+                      />
+                    </div>
+                    @if (column.product; as product) {
+                      @let tag = availability(product);
+                      <span class="muted">{{ product.sku }}</span>
+                      <p-tag [value]="tag.label" [severity]="tag.severity" />
+                      @if (column.rating; as rating) {
+                        @if (rating.count > 0) {
+                          <span class="compare__rating">
+                            <app-star-rating [value]="rating.average" />
+                            <span class="muted">{{ rating.average }} ({{ rating.count }})</span>
+                          </span>
+                        } @else {
+                          <span class="muted">No reviews yet</span>
+                        }
+                      } @else {
+                        <span class="muted">Rating unavailable</span>
+                      }
+                    } @else {
+                      <span class="muted">{{ column.status === 'not-found' ? 'Product not found' : 'Could not be loaded' }}</span>
+                    }
+                  </div>
+                </th>
+              }
+            </tr>
+          </thead>
+          @for (row of rows(); track row.key) {
+            <tbody [class.compare__group--same]="row.same">
+              <tr>
+                <th scope="rowgroup" class="compare__label" [attr.colspan]="columns().length">
+                  {{ row.label }}
+                  @if (row.same) {
+                    <span class="compare__same">· same for all</span>
+                  }
+                </th>
+              </tr>
+              <tr>
+                @for (column of columns(); track column.sku; let i = $index) {
+                  <td>
+                    @if (column.product; as product) {
+                      @if (row.key === 'certifications') {
+                        @if (certifications().length === 0) {
+                          None listed
+                        } @else {
+                          <ul class="compare__certs">
+                            @for (certification of certifications(); track certification) {
+                              @let held = product.certifications.includes(certification);
+                              <li [class.compare__cert--missing]="!held">
+                                <i class="pi" [class.pi-check]="held" [class.pi-minus]="!held" aria-hidden="true"></i>
+                                {{ certification }}
+                                @if (!held) {
+                                  <span class="visually-hidden">(not certified)</span>
+                                }
+                              </li>
+                            }
+                          </ul>
+                        }
+                      } @else {
+                        {{ row.values[i] }}
+                      }
+                    } @else {
+                      <span class="muted" aria-hidden="true">—</span><span class="visually-hidden">Not available</span>
+                    }
+                  </td>
+                }
+              </tr>
+            </tbody>
+          }
+        </table>
+      }
+    }
+  }
+</section>
