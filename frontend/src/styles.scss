@@ -1,0 +1,31 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--p-text-color);
+  background: var(--p-surface-50);
+}
+
+.muted {
+  color: var(--p-text-muted-color);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+// Focus and scrollIntoView keep targets clear of the sticky compare bar (WCAG 2.4.11).
+html:has(app-compare-bar .bar) {
+  scroll-padding-bottom: 7rem;
+}
